@@ -20,6 +20,25 @@
             background: rgba(255,255,255,0.1); border-radius: 25px; 
             backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15);
             box-shadow: 0 8px 32px 0 rgba(30, 58, 138, 0.3);
+            position: relative;
+        }
+        .map-nav-btn {
+            background: linear-gradient(45deg, #1e3a8a, #0f172a);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+        }
+        .map-nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.5);
+            background: linear-gradient(45deg, #2563eb, #1e3a8a);
         }
         .header h1 { font-size: 2.8em; margin-bottom: 10px; font-weight: 700; }
         .header p { font-size: 1.1em; opacity: 0.9; }
@@ -51,7 +70,24 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .content-wrapper { display: grid; grid-template-columns: 1fr 420px; gap: 25px; }
+        .content-wrapper { display: grid; grid-template-columns: 1fr 550px; gap: 25px; }
+        .umkm-grid-container { 
+            max-height: calc(100vh - 300px); 
+            overflow-y: auto; 
+            scrollbar-width: thin; 
+            scrollbar-color: #1e3a8a transparent;
+        }
+        .umkm-grid-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .umkm-grid-container::-webkit-scrollbar-track {
+            background: rgba(30, 58, 138, 0.1);
+            border-radius: 4px;
+        }
+        .umkm-grid-container::-webkit-scrollbar-thumb {
+            background: rgba(30, 58, 138, 0.3);
+            border-radius: 4px;
+        }
         .umkm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .umkm-card { 
             background: rgba(255,255,255,0.98); border-radius: 25px; 
@@ -84,7 +120,7 @@
             font-size: 24px; margin-right: 15px; color: white; 
         }
         .kuliner { background: linear-gradient(45deg, #1e3a8a, #1e40af); }
-        .fashion { background: linear-gradient(45deg, #0f172a, #374151); }
+        .retail { background: linear-gradient(45deg, #0f172a, #374151); }
         .kerajinan { background: linear-gradient(45deg, #1e3a8a, #0f172a); }
         .jasa { background: linear-gradient(45deg, #000000, #1e3a8a); }
         .umkm-category { 
@@ -120,7 +156,7 @@
             box-shadow: 0 4px 15px rgba(30, 58, 138, 0.4);
         }
         #map { 
-            width: 100%; height: 400px; border-radius: 20px; 
+            width: 100%; height: 500px; border-radius: 20px; 
             z-index: 1; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .location-list { 
@@ -188,6 +224,162 @@
             70% { box-shadow: 0 0 0 10px rgba(30, 64, 175, 0); }
             100% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0); }
         }
+        
+        /* Loading Screen Styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 50%, #000000 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        
+        .loading-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loading-logo {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            color: white;
+            margin-bottom: 30px;
+            animation: logoSpin 2s ease-in-out infinite, logoGlow 2s ease-in-out infinite alternate;
+            border: 3px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(20px);
+        }
+        
+        @keyframes logoSpin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        @keyframes logoGlow {
+            0% { 
+                box-shadow: 0 0 20px rgba(255,255,255,0.2), 
+                           0 0 40px rgba(30,58,138,0.3),
+                           0 0 60px rgba(30,58,138,0.2);
+            }
+            100% { 
+                box-shadow: 0 0 30px rgba(255,255,255,0.4), 
+                           0 0 60px rgba(30,58,138,0.5),
+                           0 0 90px rgba(30,58,138,0.3);
+            }
+        }
+        
+        .loading-text {
+            color: white;
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            animation: textFade 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes textFade {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1em;
+            margin-top: 20px;
+            text-align: center;
+            animation: subtitleSlide 3s ease-in-out infinite;
+        }
+        
+        @keyframes subtitleSlide {
+            0%, 100% { transform: translateY(0px); opacity: 0.8; }
+            50% { transform: translateY(-5px); opacity: 1; }
+        }
+        
+        /* Route Loading Animation */
+        .route-loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            display: none;
+            z-index: 2000;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(30, 58, 138, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .route-loading.show {
+            display: block;
+            animation: routeLoadFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes routeLoadFadeIn {
+            from { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.8); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1); 
+            }
+        }
+        
+        .route-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #1e3a8a;
+            border-radius: 50%;
+            animation: routeSpin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes routeSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .route-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .route-subtext {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
         .leaflet-popup-content-wrapper { 
             border-radius: 15px; 
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -201,31 +393,353 @@
         .leaflet-routing-container {
             display: none !important;
         }
+        /* Mobile-first approach */
         @media (max-width: 768px) { 
-            .content-wrapper { grid-template-columns: 1fr; } 
-            .umkm-grid { grid-template-columns: 1fr; }
-            .controls { flex-direction: column; }
-            .map-header { flex-direction: column; gap: 10px; }
+            .container { padding: 15px; }
+            .header { margin-bottom: 20px; padding: 20px; }
+            .header h1 { font-size: 2.2em; }
+            .header p { font-size: 1em; }
+            
+            .content-wrapper { 
+                grid-template-columns: 1fr; 
+                gap: 20px;
+            }
+            
+            .umkm-grid-container {
+                position: static;
+                max-height: none;
+                overflow-y: visible;
+            }
+            
+            .umkm-grid { 
+                grid-template-columns: 1fr; 
+                gap: 15px;
+            }
+            
+            .umkm-card { 
+                border-radius: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            }
+            
+            .umkm-content { padding: 20px; }
+            .umkm-header { margin-bottom: 12px; }
+            
+            .controls { 
+                flex-direction: column; 
+                gap: 12px;
+                padding: 0;
+            }
+            
+            .search-box { 
+                min-width: 100%; 
+                padding: 18px 25px; 
+                font-size: 16px;
+                border-radius: 25px;
+            }
+            
+            .filter-btn { 
+                padding: 15px 20px; 
+                font-size: 16px;
+                border-radius: 25px;
+                min-height: 50px;
+            }
+            
+            .map-container { 
+                position: static;
+                padding: 20px;
+                border-radius: 20px;
+            }
+            
+            .map-header { 
+                flex-direction: column; 
+                gap: 15px; 
+                text-align: center;
+            }
+            
+            #map { 
+                height: 400px; 
+                border-radius: 15px;
+            }
+            
+            .map-nav-btn {
+                padding: 18px 25px;
+                font-size: 1.1em;
+                margin-top: 15px;
+                border-radius: 20px;
+            }
+            
+            .location-list { 
+                max-height: 200px; 
+                margin-top: 15px;
+            }
+            
+            .location-item { 
+                padding: 18px; 
+                border-radius: 12px;
+                margin-bottom: 8px;
+                font-size: 16px;
+            }
+            
+            .modal-content { 
+                width: 95%; 
+                max-height: 90vh;
+                border-radius: 20px;
+            }
+            
+            .modal-image { 
+                height: 200px; 
+            }
+            
+            .modal-body { 
+                padding: 25px;
+                max-height: calc(90vh - 200px);
+            }
+            
+            .close-btn { 
+                width: 45px; 
+                height: 45px; 
+                font-size: 28px;
+                top: 12px;
+                right: 15px;
+            }
+            
+            .direction-btn { 
+                padding: 15px 25px; 
+                font-size: 16px;
+                border-radius: 25px;
+                margin: 10px 5px;
+                min-height: 50px;
+                min-width: 140px;
+            }
+            
+            .detail-btn { 
+                padding: 12px 20px; 
+                font-size: 15px;
+                border-radius: 20px;
+                margin-top: 12px;
+                min-height: 45px;
+            }
+            
+            .umkm-category { 
+                padding: 8px 16px; 
+                font-size: 0.85em;
+                border-radius: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .detail-item { 
+                font-size: 1em; 
+                margin-bottom: 12px; 
+                padding: 5px 0;
+            }
+            
+            .detail-item i { 
+                margin-right: 15px; 
+                width: 20px; 
+                font-size: 16px;
+            }
+            
+            /* Improve touch targets */
+            .umkm-card { 
+                min-height: 120px;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .location-btn { 
+                padding: 12px 20px; 
+                font-size: 15px;
+                border-radius: 20px;
+                min-height: 45px;
+            }
+            
+            /* Better popup handling on mobile */
+            .leaflet-popup-content-wrapper {
+                border-radius: 12px;
+                padding: 5px;
+            }
+            
+            .leaflet-popup-content {
+                margin: 15px;
+                font-size: 14px;
+            }
+            
+            /* Remove sticky header on mobile for better scrolling */
+            .header {
+                position: static;
+                backdrop-filter: blur(10px);
+                background: rgba(30, 58, 138, 0.95);
+            }
+            
+            /* Better scrolling */
+            .location-list::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            .location-list::-webkit-scrollbar-track {
+                background: rgba(30, 58, 138, 0.1);
+                border-radius: 3px;
+            }
+            
+            .location-list::-webkit-scrollbar-thumb {
+                background: rgba(30, 58, 138, 0.3);
+                border-radius: 3px;
+            }
+            
+            /* Prevent horizontal scroll */
+            body {
+                overflow-x: hidden;
+            }
+        }
+        
+        /* Scroll to top button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(45deg, #1e3a8a, #0f172a);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(100px);
+            backdrop-filter: blur(10px);
+        }
+        
+        .scroll-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .scroll-to-top:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 12px 35px rgba(30, 58, 138, 0.6);
+        }
+        
+        .scroll-to-top:active {
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        /* Enhanced mobile interactions */
+        .umkm-card {
+            -webkit-tap-highlight-color: rgba(30, 58, 138, 0.2);
+            transform-origin: center;
+        }
+        
+        .umkm-card:active {
+            transform: scale(0.98);
+        }
+        
+        /* Improved button styles for mobile */
+        .filter-btn, .direction-btn, .detail-btn, .location-btn, .map-nav-btn {
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .filter-btn::before, .direction-btn::before, .detail-btn::before, 
+        .location-btn::before, .map-nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:active::before, .direction-btn:active::before, 
+        .detail-btn:active::before, .location-btn:active::before, 
+        .map-nav-btn:active::before {
+            width: 200px;
+            height: 200px;
+        }
+
+        /* Enhanced loading animations */
+        .loading-screen {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 30%, #000000 70%, #1e3a8a 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 4s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.8em; }
+            .header p { font-size: 0.9em; }
+            .umkm-content { padding: 15px; }
+            .modal-body { padding: 20px; }
+            
+            .controls {
+                position: static;
+                background: rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+                padding: 10px;
+                border-radius: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .scroll-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">
+            🏪
+        </div>
+        <div class="loading-text">Katalog UMKM Karangturi</div>
+        <div class="loading-spinner"></div>
+        <div class="loading-subtitle">Memuat data UMKM lokal...</div>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">↑</button>
+    
     <div class="container">
         <div class="header">
             <h1>📱 Katalog UMKM Karangturi</h1>
             <p>Temukan & Dukung Bisnis Lokal di Sekitar Anda</p>
+            <button class="map-nav-btn" onclick="goToMap()">🗺️ Lihat Peta</button>
         </div>
 
         <div class="controls">
             <input type="text" class="search-box" placeholder="🔍 Cari UMKM favorit Anda...">
             <button class="filter-btn active" data-category="all">Semua</button>
             <button class="filter-btn" data-category="kuliner">Kuliner</button>
-            <button class="filter-btn" data-category="fashion">Fashion</button>
+            <button class="filter-btn" data-category="retail">Perdagangan/Retail</button>
             <button class="filter-btn" data-category="jasa">Jasa</button>
         </div>
 
         <div class="content-wrapper">
-            <div class="umkm-grid" id="umkmGrid"></div>
+            <div class="umkm-grid-container">
+                <div class="umkm-grid" id="umkmGrid"></div>
+            </div>
             
             <div class="map-container">
                 <div class="map-header">
@@ -236,6 +750,13 @@
                 <div class="location-list" id="locationList"></div>
             </div>
         </div>
+    </div>
+
+    <!-- Route Loading Overlay -->
+    <div class="route-loading" id="routeLoading">
+        <div class="route-spinner"></div>
+        <div class="route-text">Membuat Rute...</div>
+        <div class="route-subtext">Menghitung jalur terbaik ke UMKM</div>
     </div>
 
     <div class="modal" id="umkmModal">
@@ -255,15 +776,15 @@
                 deskripsi: "Warung nasi gudeg dan soto ayam khas Yogya dengan cita rasa autentik",
                 alamat: "Jl. Karangturi Utara No. 15", telepon: "0812-3456-7890",
                 jam: "06:00 - 22:00", harga: "Rp 8.000 - 15.000",
-                lat: -6.9175, lng: 110.1404,
+                lat: -6.9902, lng: 110.4340,
                 foto: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=200&fit=crop"
             },
             {
-                id: 2, nama: "Konveksi Berkah", kategori: "fashion",
-                deskripsi: "Produksi seragam sekolah, kaos custom, dan berbagai kebutuhan fashion",
+                id: 2, nama: "Konveksi Berkah", kategori: "retail",
+                deskripsi: "Produksi seragam sekolah, kaos custom, dan berbagai kebutuhan retail fashion",
                 alamat: "Jl. Karangturi Selatan No. 28", telepon: "0813-2468-1357",
                 jam: "08:00 - 17:00", harga: "Rp 35.000 - 125.000",
-                lat: -6.9185, lng: 110.1414,
+                lat: -6.9904, lng: 110.4326,
                 foto: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&h=200&fit=crop"
             },
             {
@@ -271,7 +792,7 @@
                 deskripsi: "Layanan cuci setrika kilat, dry cleaning, dan perawatan pakaian premium",
                 alamat: "Jl. Karangturi Barat No. 8", telepon: "0814-5678-9012",
                 jam: "07:00 - 20:00", harga: "Rp 4.000 - 25.000/kg",
-                lat: -6.9165, lng: 110.1394,
+                lat: -6.9918, lng: 110.4336,
                 foto: "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400&h=200&fit=crop"
             },
             {
@@ -279,7 +800,7 @@
                 deskripsi: "Bakso sapi asli dengan kuah kaldu segar dan aneka pelengkap",
                 alamat: "Jl. Karangturi Tengah No. 23", telepon: "0816-1234-5678",
                 jam: "10:00 - 21:00", harga: "Rp 12.000 - 18.000",
-                lat: -6.9195, lng: 110.1424,
+                lat: -6.9935, lng: 110.4328,
                 foto: "https://images.unsplash.com/photo-1594007654729-407eedc4be65?w=400&h=200&fit=crop"
             }
         ];
@@ -288,35 +809,72 @@
             currentRoute = null, selectedUmkm = null;
 
         function getKategoriIcon(kategori) {
-            const icons = { 'kuliner': '🍽️', 'fashion': '👕', 'jasa': '🔧' };
+            const icons = { 'kuliner': '🍽️', 'retail': '🛍', 'jasa': '🔧' };
             return icons[kategori] || '🏪';
         }
 
         function getMarkerColor(kategori) {
-            const colors = { 'kuliner': '#1e3a8a', 'fashion': '#0f172a', 'jasa': '#374151' };
+            const colors = { 'kuliner': '#1e3a8a', 'retail': '#0f172a', 'jasa': '#374151' };
             return colors[kategori] || '#1e3a8a';
         }
 
         function initMap() {
-            map = L.map('map').setView([-6.9175, 110.1404], 15);
+            // Initialize map with default view at Karangturi center
+            map = L.map('map').setView([-6.9890, 110.4225], 16);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
-            // Get user location
+            // Add Karangturi boundary polygon based on the provided image
+            const karangturiBoundary = [
+                [-6.985383, 110.431508],  // Northwest corner
+                [-6.985248, 110.434814],  // Northeast corner  
+                [-6.995028, 110.433857],  // Southeast corner
+                [-6.994326, 110.431960],  // Southwest corner
+                [-6.985383, 110.431508]   // Close polygon
+            ];
+
+            L.polygon(karangturiBoundary, {
+                color: '#1e3a8a',
+                weight: 3,
+                opacity: 1,
+                fillColor: '#1e3a8a',
+                fillOpacity: 0,
+                dashArray: '5, 10'
+            }).addTo(map);
+
+            // Get user location and show it, but keep map focused on user location
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         userLocation = [position.coords.latitude, position.coords.longitude];
+                        // Focus map on user location first
+                        map.setView(userLocation, 16);
+                        showUserLocation();
+                        // Open user location popup to indicate the location
+                        setTimeout(() => {
+                            if (userMarker) {
+                                userMarker.openPopup();
+                            }
+                        }, 500);
+                    },
+                    (error) => {
+                        console.log("Geolocation error:", error);
+                        // Fallback to Karangturi center if geolocation fails
+                        userLocation = [-6.9890, 110.4225];
+                        map.setView(userLocation, 16);
                         showUserLocation();
                     },
-                    () => {
-                        userLocation = [-6.9175, 110.1404]; // Default location
-                        showUserLocation();
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
                     }
                 );
             } else {
-                userLocation = [-6.9175, 110.1404];
+                // Fallback for browsers without geolocation
+                userLocation = [-6.9890, 110.4225];
+                map.setView(userLocation, 16);
                 showUserLocation();
             }
 
@@ -371,8 +929,28 @@
             }
         }
 
+        function goToMap() {
+            document.querySelector('.map-container').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'
+            });
+            
+            // If user location is available, focus on it
+            if (userLocation) {
+                setTimeout(() => {
+                    map.setView(userLocation, 16);
+                    if (userMarker) {
+                        userMarker.openPopup();
+                    }
+                }, 500);
+            }
+        }
+
         function showRoute(umkmId) {
             const umkm = umkmData.find(u => u.id === umkmId);
+            
+            // Show loading animation
+            showRouteLoading();
             
             if (currentRoute) {
                 map.removeControl(currentRoute);
@@ -393,6 +971,56 @@
                     show: false,
                     collapsible: false
                 }).addTo(map);
+
+                // Hide loading after route is created
+                currentRoute.on('routesfound', function() {
+                    setTimeout(() => {
+                        hideRouteLoading();
+                        // Auto go to map and show route
+                        goToMapWithRoute(umkmId);
+                    }, 500);
+                });
+
+                // Hide loading if route fails
+                currentRoute.on('routingerror', function() {
+                    hideRouteLoading();
+                    alert('Gagal membuat rute. Silakan coba lagi.');
+                });
+            } else {
+                hideRouteLoading();
+                alert('Lokasi Anda belum terdeteksi. Aktifkan GPS dan refresh halaman.');
+            }
+        }
+
+        function showRouteLoading() {
+            document.getElementById('routeLoading').classList.add('show');
+        }
+
+        function hideRouteLoading() {
+            document.getElementById('routeLoading').classList.remove('show');
+        }
+
+        function goToMapWithRoute(umkmId) {
+            // Close modal if open
+            closeModal();
+            
+            // Select the UMKM on map
+            selectUmkm(umkmId);
+            
+            // Scroll to map section smoothly
+            document.querySelector('.map-container').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'
+            });
+            
+            // Fit map to show both user location and UMKM
+            const umkm = umkmData.find(u => u.id === umkmId);
+            if (userLocation) {
+                const group = new L.featureGroup([
+                    L.marker(userLocation),
+                    L.marker([umkm.lat, umkm.lng])
+                ]);
+                map.fitBounds(group.getBounds().pad(0.1));
             }
         }
 
@@ -463,6 +1091,7 @@
                 <div style="margin-bottom: 25px;"><h4>💰 Harga:</h4><p style="margin-top: 5px;">${umkm.harga}</p></div>
                 <div style="text-align: center;">
                     <button class="direction-btn" onclick="showOnMap(${umkm.id})">🗺️ Lihat Lokasi</button>
+                    <button class="direction-btn" onclick="showRoute(${umkm.id})" style="margin-left: 10px;">🧭 Buat Rute</button>
                 </div>
             `;
             document.getElementById('umkmModal').style.display = 'block';
@@ -510,12 +1139,212 @@
             }
         });
 
-        // Initialize
+        // Mobile-specific optimizations
+        function optimizeForMobile() {
+            // Prevent zoom on input focus (iOS)
+            document.querySelectorAll('input, select, textarea').forEach(element => {
+                element.addEventListener('focus', function() {
+                    if (window.innerWidth < 768) {
+                        document.querySelector('meta[name=viewport]').setAttribute('content', 
+                            'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+                    }
+                });
+                
+                element.addEventListener('blur', function() {
+                    if (window.innerWidth < 768) {
+                        document.querySelector('meta[name=viewport]').setAttribute('content', 
+                            'width=device-width, initial-scale=1');
+                    }
+                });
+            });
+
+            // Add touch feedback
+            document.querySelectorAll('.umkm-card, .location-item, .filter-btn, .direction-btn').forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.98)';
+                    this.style.transition = 'transform 0.1s ease';
+                });
+                
+                element.addEventListener('touchend', function() {
+                    this.style.transform = '';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+            });
+
+            // Optimize map for mobile
+            if (window.innerWidth < 768) {
+                map.scrollWheelZoom.disable();
+                map.on('focus', () => map.scrollWheelZoom.enable());
+                map.on('blur', () => map.scrollWheelZoom.disable());
+            }
+
+            // Add swipe gesture for modal close
+            let startY = 0;
+            const modal = document.getElementById('umkmModal');
+            const modalContent = document.querySelector('.modal-content');
+            
+            modalContent.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+            });
+            
+            modalContent.addEventListener('touchmove', function(e) {
+                const currentY = e.touches[0].clientY;
+                const diff = startY - currentY;
+                
+                if (diff < -50) { // Swipe down
+                    modalContent.style.transform = `translateY(${Math.abs(diff) - 50}px)`;
+                }
+            });
+            
+            modalContent.addEventListener('touchend', function(e) {
+                const endY = e.changedTouches[0].clientY;
+                const diff = startY - endY;
+                
+                if (diff < -100) { // Swipe down significantly
+                    closeModal();
+                }
+                modalContent.style.transform = '';
+            });
+        }
+
+        // Add pull-to-refresh functionality
+        function addPullToRefresh() {
+            let startY = 0;
+            let isRefreshing = false;
+            const refreshThreshold = 80;
+            
+            document.addEventListener('touchstart', function(e) {
+                if (window.pageYOffset === 0) {
+                    startY = e.touches[0].pageY;
+                }
+            });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (window.pageYOffset === 0 && !isRefreshing) {
+                    const currentY = e.touches[0].pageY;
+                    const diff = currentY - startY;
+                    
+                    if (diff > refreshThreshold) {
+                        isRefreshing = true;
+                        // Simple refresh animation
+                        document.body.style.transform = 'translateY(20px)';
+                        document.body.style.transition = 'transform 0.3s ease';
+                        
+                        setTimeout(() => {
+                            location.reload();
+                        }, 300);
+                    }
+                }
+            });
+        }
+
+        // Loading Screen Functions
+        function showLoadingScreen() {
+            document.getElementById('loadingScreen').style.display = 'flex';
+        }
+        
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.classList.add('fade-out');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        }
+        
+        // Scroll to top functionality
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Show/hide scroll to top button
+        function toggleScrollToTopButton() {
+            const scrollButton = document.getElementById('scrollToTop');
+            if (window.pageYOffset > 300) {
+                scrollButton.classList.add('visible');
+            } else {
+                scrollButton.classList.remove('visible');
+            }
+        }
+        
+        // Enhanced mobile user experience
+        function enhanceMobileUX() {
+            // Add haptic feedback simulation for supported devices
+            function addHapticFeedback(element) {
+                element.addEventListener('touchstart', function() {
+                    if (navigator.vibrate) {
+                        navigator.vibrate(10); // Short vibration
+                    }
+                });
+            }
+            
+            // Apply haptic feedback to interactive elements
+            document.querySelectorAll('.umkm-card, .filter-btn, .direction-btn, .detail-btn').forEach(addHapticFeedback);
+            
+            // Add smooth transitions for better perceived performance
+            document.querySelectorAll('.umkm-card').forEach(card => {
+                card.style.willChange = 'transform';
+                card.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.98) translateY(2px)';
+                    this.style.boxShadow = '0 4px 15px rgba(30, 58, 138, 0.2)';
+                });
+                
+                card.addEventListener('touchend', function() {
+                    setTimeout(() => {
+                        this.style.transform = '';
+                        this.style.boxShadow = '';
+                    }, 150);
+                });
+            });
+            
+            // Prevent double-tap zoom on buttons
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    this.click();
+                });
+            });
+            
+            // Add loading states for better user feedback
+            document.querySelectorAll('.direction-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!this.classList.contains('loading')) {
+                        this.classList.add('loading');
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '⏳ Memuat...';
+                        
+                        setTimeout(() => {
+                            this.classList.remove('loading');
+                            this.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            });
+        }
+        
+        // Add scroll event listener
+        window.addEventListener('scroll', toggleScrollToTopButton);
+        
+        // Initialize with loading screen
         document.addEventListener('DOMContentLoaded', function() {
-            renderUmkmGrid();
-            renderLocationList();
-            initMap();
-            setTimeout(() => selectUmkm(umkmData[0].id), 1500);
+            showLoadingScreen();
+            
+            // Simulate loading time and initialize components
+            setTimeout(() => {
+                renderUmkmGrid();
+                renderLocationList();
+                initMap();
+                optimizeForMobile();
+                addPullToRefresh();
+                enhanceMobileUX();
+                
+                // Hide loading screen after everything is loaded
+                setTimeout(() => {
+                    hideLoadingScreen();
+                }, 1000);
+            }, 1500);
         });
     </script>
 </body>
