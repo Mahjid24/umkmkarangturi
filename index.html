@@ -331,7 +331,18 @@
       border-radius: 15px;
       z-index: 1;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      touch-action: manipulation;
+      touch-action: pan-x pan-y;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      cursor: grab;
+    }
+
+    #map:active {
+      cursor: grabbing;
     }
 
     .location-list {
@@ -671,14 +682,35 @@
 
     .leaflet-control-zoom {
       border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
     .leaflet-control-zoom a {
       border-radius: 6px;
-      font-size: 18px;
-      line-height: 30px;
-      width: 30px;
-      height: 30px;
+      font-size: 20px;
+      line-height: 40px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(30, 58, 138, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: rgba(30, 58, 138, 0.9);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .leaflet-touch .leaflet-control-zoom a {
+      width: 44px;
+      height: 44px;
+      line-height: 44px;
+      font-size: 22px;
     }
 
     .leaflet-routing-container {
@@ -994,32 +1026,51 @@
     function initMap() {
       map = L.map('map', {
         zoomControl: true,
-        scrollWheelZoom: false,
+        scrollWheelZoom: true,
         doubleClickZoom: true,
         touchZoom: true,
-        boxZoom: false,
-        keyboard: false,
+        dragging: true,
+        boxZoom: true,
+        keyboard: true,
         tap: true,
-        tapTolerance: 15
+        tapTolerance: 15,
+        zoomSnap: 0.5,
+        zoomDelta: 0.5,
+        wheelPxPerZoomLevel: 60
       }).setView([-6.9890, 110.4225], 16);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
-      // Enable scroll wheel zoom on focus
-      map.on('focus', () => {
-        map.scrollWheelZoom.enable();
-      });
+      // Mobile-specific optimizations
+      if (L.Browser.mobile) {
+        map.getContainer().style.cursor = 'grab';
+        
+        map.on('dragstart', function() {
+          map.getContainer().style.cursor = 'grabbing';
+        });
+        
+        map.on('dragend', function() {
+          map.getContainer().style.cursor = 'grab';
+        });
+      }
 
-      map.on('blur', () => {
-        map.scrollWheelZoom.disable();
-      });
+      // Better touch handling for all devices
+      let mapContainer = map.getContainer();
+      
+      mapContainer.addEventListener('touchstart', function(e) {
+        // Prevent page scroll when touching the map
+        e.preventDefault();
+      }, { passive: false });
 
-      // Touch handling for mobile
-      map.getContainer().addEventListener('touchstart', () => {
-        map.scrollWheelZoom.enable();
-      });
+      mapContainer.addEventListener('touchmove', function(e) {
+        // Allow map interaction while preventing page scroll
+        e.stopPropagation();
+      }, { passive: true });
+
+      // Ensure zoom controls are easily accessible on mobile
+      map.zoomControl.setPosition('bottomright');
 
       // Add Karangturi boundary
       const karangturiBoundary = [
@@ -1569,16 +1620,29 @@
       setTimeout(() => {
         if (map) {
           map.invalidateSize();
+          // Re-center map after orientation change
+          if (userLocation) {
+            map.setView(userLocation, map.getZoom());
+          }
         }
-      }, 100);
+      }, 300);
     });
 
     // Handle resize
     window.addEventListener('resize', function () {
-      if (map) {
-        map.invalidateSize();
-      }
+      setTimeout(() => {
+        if (map) {
+          map.invalidateSize();
+        }
+      }, 100);
     });
+
+    // Prevent iOS Safari bounce effect on map container
+    document.addEventListener('touchmove', function(e) {
+      if (e.target.closest('#map')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
   </script>
 </body>
 
