@@ -574,6 +574,21 @@
             }
         }
 
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
         .loading-subtitle {
             color: rgba(255, 255, 255, 0.8);
             font-size: 0.9em;
@@ -673,6 +688,11 @@
         .leaflet-popup-content-wrapper {
             border-radius: 12px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1001 !important;
+        }
+
+        .leaflet-popup {
+            z-index: 1001 !important;
         }
 
         .leaflet-popup-content {
@@ -680,9 +700,17 @@
             font-size: 14px;
         }
 
+        .leaflet-popup-content button {
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+            z-index: 1002 !important;
+            position: relative;
+        }
+
         .leaflet-control-zoom {
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000 !important;
         }
 
         .leaflet-control-zoom a {
@@ -698,6 +726,9 @@
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid rgba(30, 58, 138, 0.2);
             transition: all 0.2s ease;
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+            z-index: 1001 !important;
         }
 
         .leaflet-control-zoom a:hover {
@@ -711,10 +742,36 @@
             height: 44px;
             line-height: 44px;
             font-size: 22px;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .leaflet-routing-container {
             display: none !important;
+        }
+
+        /* Fix for custom markers */
+        .custom-marker {
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+            z-index: 1000 !important;
+            cursor: pointer !important;
+        }
+
+        .custom-marker > div {
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+        }
+
+        /* Fix popup buttons specifically */
+        .custom-popup .detail-btn {
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+            z-index: 1003 !important;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         /* Touch improvements */
@@ -1035,10 +1092,11 @@
                 boxZoom: true,
                 keyboard: true,
                 tap: true,
-                tapTolerance: 15,
+                tapTolerance: 20,
                 zoomSnap: 0.5,
                 zoomDelta: 0.5,
-                wheelPxPerZoomLevel: 60
+                wheelPxPerZoomLevel: 60,
+                maxZoom: 19
             }).setView([-6.9890, 110.4225], 16);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1058,21 +1116,49 @@
                 });
             }
 
-            // Better touch handling for all devices
+            // Better touch handling for map container only
             let mapContainer = map.getContainer();
 
             mapContainer.addEventListener('touchstart', function (e) {
-                // Prevent page scroll when touching the map
-                e.preventDefault();
+                // Only prevent default if not touching an interactive element
+                if (!e.target.closest('.leaflet-control, .leaflet-popup, .custom-marker')) {
+                    e.preventDefault();
+                }
             }, {passive: false});
 
             mapContainer.addEventListener('touchmove', function (e) {
                 // Allow map interaction while preventing page scroll
-                e.stopPropagation();
+                if (!e.target.closest('.leaflet-control, .leaflet-popup, .custom-marker')) {
+                    e.stopPropagation();
+                }
             }, {passive: true});
 
             // Ensure zoom controls are easily accessible on mobile
             map.zoomControl.setPosition('bottomright');
+
+            // Fix zoom control touch events
+            setTimeout(() => {
+                const zoomControls = document.querySelectorAll('.leaflet-control-zoom a');
+                zoomControls.forEach(control => {
+                    control.style.pointerEvents = 'auto';
+                    control.style.touchAction = 'manipulation';
+                    
+                    // Add proper touch handling for zoom controls
+                    control.addEventListener('touchstart', function(e) {
+                        e.stopPropagation();
+                        this.style.backgroundColor = 'rgba(30, 58, 138, 0.9)';
+                        this.style.color = 'white';
+                    }, {passive: true});
+                    
+                    control.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.style.backgroundColor = '';
+                        this.style.color = '';
+                        this.click();
+                    }, {passive: false});
+                });
+            }, 100);
 
             // Add Karangturi boundary
             const karangturiBoundary = [
@@ -1092,13 +1178,14 @@
                 dashArray: '5, 10'
             }).addTo(map);
 
-            // Get user location
+            // Get initial user location
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         userLocation = [position.coords.latitude, position.coords.longitude];
+                        locationAccuracy = position.coords.accuracy;
                         map.setView(userLocation, 16);
-                        showUserLocation();
+                        updateUserLocationOnMap();
                         setTimeout(() => {
                             if (userMarker) {
                                 userMarker.openPopup();
@@ -1108,8 +1195,9 @@
                     (error) => {
                         console.log("Geolocation error:", error);
                         userLocation = [-6.9890, 110.4225];
+                        locationAccuracy = 50;
                         map.setView(userLocation, 16);
-                        showUserLocation();
+                        updateUserLocationOnMap();
                     },
                     {
                         enableHighAccuracy: true,
@@ -1119,27 +1207,28 @@
                 );
             } else {
                 userLocation = [-6.9890, 110.4225];
+                locationAccuracy = 50;
                 map.setView(userLocation, 16);
-                showUserLocation();
+                updateUserLocationOnMap();
             }
 
             // Add UMKM markers
             umkmData.forEach(umkm => {
                 const icon = L.divIcon({
-                    html: `<div style="background: ${getMarkerColor(umkm.kategori)}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; border: 2px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4); cursor: pointer;">${getKategoriIcon(umkm.kategori)}</div>`,
+                    html: `<div style="background: ${getMarkerColor(umkm.kategori)}; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; border: 2px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4); cursor: pointer; pointer-events: auto; touch-action: manipulation;">${getKategoriIcon(umkm.kategori)}</div>`,
                     className: 'custom-marker',
                     iconSize: [35, 35],
                     popupAnchor: [0, -18]
                 });
 
                 const popupContent = `
-          <div style="text-align: center; min-width: 180px; max-width: 220px;">
+          <div style="text-align: center; min-width: 180px; max-width: 220px; pointer-events: auto;">
             <img src="${umkm.foto}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
             <h4 style="margin: 0 0 4px 0; color: #333; font-size: 1rem;">${umkm.nama}</h4>
             <p style="margin: 0 0 8px 0; color: #666; font-size: 0.8rem;">${umkm.alamat}</p>
             <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
-              <button class="detail-btn" onclick="showUmkmDetail(${umkm.id})">👁️ Detail</button>
-              <button class="detail-btn" onclick="showRoute(${umkm.id})">🗺️ Rute</button>
+              <button class="detail-btn popup-btn" data-umkm-id="${umkm.id}" data-action="detail" style="pointer-events: auto; touch-action: manipulation; z-index: 1003; position: relative;">👁️ Detail</button>
+              <button class="detail-btn popup-btn" data-umkm-id="${umkm.id}" data-action="route" style="pointer-events: auto; touch-action: manipulation; z-index: 1003; position: relative;">🗺️ Rute</button>
             </div>
           </div>
         `;
@@ -1147,11 +1236,86 @@
                 const marker = L.marker([umkm.lat, umkm.lng], {icon}).addTo(map)
                     .bindPopup(popupContent, {
                         maxWidth: 250,
-                        className: 'custom-popup'
+                        className: 'custom-popup',
+                        closeOnClick: false,
+                        autoClose: false
                     });
+
+                // Add click event to marker for mobile
+                marker.on('click', function(e) {
+                    e.originalEvent.stopPropagation();
+                    this.openPopup();
+                });
 
                 markers[umkm.id] = marker;
             });
+
+            // Handle popup button clicks with delegation
+            map.on('popupopen', function(e) {
+                setTimeout(() => {
+                    const popupButtons = document.querySelectorAll('.popup-btn');
+                    popupButtons.forEach(button => {
+                        // Remove existing listeners
+                        button.removeEventListener('click', handlePopupButtonClick);
+                        button.removeEventListener('touchend', handlePopupButtonTouch);
+                        
+                        // Add new listeners
+                        button.addEventListener('click', handlePopupButtonClick, {passive: false});
+                        button.addEventListener('touchend', handlePopupButtonTouch, {passive: false});
+                    });
+                }, 100);
+            });
+
+            // Auto-close popup when clicking outside or opening another popup
+            map.on('click', function(e) {
+                // Close popup if clicking on map (not on marker)
+                if (!e.originalEvent.target.closest('.leaflet-marker-icon, .leaflet-popup')) {
+                    map.closePopup();
+                }
+            });
+
+            // Close current popup when opening a new one
+            let currentOpenPopup = null;
+            map.on('popupopen', function(e) {
+                if (currentOpenPopup && currentOpenPopup !== e.popup) {
+                    map.closePopup(currentOpenPopup);
+                }
+                currentOpenPopup = e.popup;
+            });
+
+            map.on('popupclose', function(e) {
+                if (currentOpenPopup === e.popup) {
+                    currentOpenPopup = null;
+                }
+            });
+
+            function handlePopupButtonClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const umkmId = parseInt(this.dataset.umkmId);
+                const action = this.dataset.action;
+                
+                if (action === 'detail') {
+                    showUmkmDetail(umkmId);
+                } else if (action === 'route') {
+                    showRoute(umkmId);
+                }
+            }
+
+            function handlePopupButtonTouch(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const umkmId = parseInt(this.dataset.umkmId);
+                const action = this.dataset.action;
+                
+                setTimeout(() => {
+                    if (action === 'detail') {
+                        showUmkmDetail(umkmId);
+                    } else if (action === 'route') {
+                        showRoute(umkmId);
+                    }
+                }, 50);
+            }
         }
 
         function showUserLocation() {
@@ -1533,6 +1697,13 @@
 
         // Modal event handlers
         document.querySelector('.close-btn').addEventListener('click', closeModal);
+        
+        // Close modal when clicking outside modal content
+        document.getElementById('umkmModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
 
         function showLoadingScreen() {
             document.getElementById('loadingScreen').style.display = 'flex';
@@ -1560,6 +1731,96 @@
             } else {
                 scrollButton.classList.remove('visible');
             }
+        }
+
+        // GPS-like location tracking
+        let watchId = null;
+        let locationAccuracy = null;
+        let locationUpdateInterval = null;
+
+        function startLocationTracking() {
+            if (navigator.geolocation) {
+                // High accuracy tracking for mobile GPS-like behavior
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 5000
+                };
+
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const newLocation = [position.coords.latitude, position.coords.longitude];
+                        locationAccuracy = position.coords.accuracy;
+                        
+                        // Update user location if there's significant change
+                        if (userLocation) {
+                            const distance = calculateDistance(userLocation, newLocation);
+                            if (distance > 10) { // Only update if moved more than 10 meters
+                                userLocation = newLocation;
+                                updateUserLocationOnMap();
+                            }
+                        } else {
+                            userLocation = newLocation;
+                            updateUserLocationOnMap();
+                        }
+                    },
+                    (error) => {
+                        console.log("Location tracking error:", error);
+                    },
+                    options
+                );
+            }
+        }
+
+        function stopLocationTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+        }
+
+        function calculateDistance(pos1, pos2) {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = pos1[0] * Math.PI / 180;
+            const φ2 = pos2[0] * Math.PI / 180;
+            const Δφ = (pos2[0] - pos1[0]) * Math.PI / 180;
+            const Δλ = (pos2[1] - pos1[1]) * Math.PI / 180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                    Math.cos(φ1) * Math.cos(φ2) *
+                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            return R * c;
+        }
+
+        function updateUserLocationOnMap() {
+            if (userMarker) {
+                map.removeLayer(userMarker);
+            }
+
+            // Create pulsing user marker like GPS apps
+            const accuracyRadius = locationAccuracy || 50;
+            const userIcon = L.divIcon({
+                html: `
+                    <div style="position: relative;">
+                        <div style="width: ${Math.min(accuracyRadius/2, 100)}px; height: ${Math.min(accuracyRadius/2, 100)}px; 
+                                   border-radius: 50%; background: rgba(30,144,255,0.1); 
+                                   position: absolute; top: 50%; left: 50%; 
+                                   transform: translate(-50%, -50%); 
+                                   animation: pulse 2s infinite;"></div>
+                        <div style="width: 16px; height: 16px; border-radius: 50%; 
+                                   background: #1e40af; border: 2px solid white; 
+                                   box-shadow: 0 2px 8px rgba(30,64,175,0.5); 
+                                   position: relative; z-index: 10;"></div>
+                    </div>
+                `,
+                className: 'user-marker-gps',
+                iconSize: [16, 16]
+            });
+
+            userMarker = L.marker(userLocation, {icon: userIcon}).addTo(map)
+                .bindPopup('<div style="text-align: center;"><strong>📍 Lokasi Anda</strong><br><small>Akurasi: ~' + Math.round(locationAccuracy) + 'm</small></div>');
         }
 
         // Mobile optimizations
@@ -1590,30 +1851,101 @@
                 });
             }
 
-            // Improve touch performance with better event handling
-        document.querySelectorAll('button').forEach(button => {
-            let touchStarted = false;
-
-            button.addEventListener('touchstart', function (e) {
-                touchStarted = true;
-            });
-
-            button.addEventListener('touchend', function (e) {
-                if (touchStarted) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Small delay to ensure touch is complete
-                    setTimeout(() => {
-                        this.click();
-                    }, 10);
+            // Fixed mobile button handling - exclude map-related elements
+            document.querySelectorAll('button:not(.popup-btn), .umkm-card, .location-item, .filter-btn').forEach(element => {
+                // Skip elements inside map container
+                if (element.closest('#map, .leaflet-popup, .leaflet-control')) {
+                    return;
                 }
-                touchStarted = false;
+                
+                element.style.touchAction = 'manipulation';
+                element.style.userSelect = 'none';
+                element.style.webkitUserSelect = 'none';
+                element.style.webkitTouchCallout = 'none';
+                
+                let touchStartTime = 0;
+                let touchStartPos = {x: 0, y: 0};
+                let hasMoved = false;
+
+                element.addEventListener('touchstart', function (e) {
+                    touchStartTime = Date.now();
+                    touchStartPos = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+                    hasMoved = false;
+                    
+                    // Visual feedback
+                    this.style.transform = 'scale(0.98)';
+                    this.style.transition = 'transform 0.1s ease';
+                    
+                    // Small vibration for feedback
+                    if (navigator.vibrate) {
+                        navigator.vibrate(5);
+                    }
+                }, {passive: true});
+
+                element.addEventListener('touchmove', function (e) {
+                    const currentPos = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+                    const moveDistance = Math.sqrt(
+                        Math.pow(currentPos.x - touchStartPos.x, 2) + 
+                        Math.pow(currentPos.y - touchStartPos.y, 2)
+                    );
+                    
+                    if (moveDistance > 10) {
+                        hasMoved = true;
+                        this.style.transform = '';
+                    }
+                }, {passive: true});
+
+                element.addEventListener('touchend', function (e) {
+                    const touchDuration = Date.now() - touchStartTime;
+                    
+                    // Reset visual state
+                    this.style.transform = '';
+                    
+                    // Only trigger click if it was a short tap without movement
+                    if (touchDuration < 500 && !hasMoved) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Small delay to ensure touch is complete
+                        setTimeout(() => {
+                            // Trigger the appropriate action
+                            if (element.onclick) {
+                                element.onclick();
+                            } else if (element.tagName === 'BUTTON') {
+                                element.click();
+                            } else if (element.classList.contains('umkm-card')) {
+                                const umkmId = parseInt(element.dataset.id);
+                                if (umkmId) {
+                                    showUmkmDetail(umkmId);
+                                }
+                            } else if (element.classList.contains('location-item')) {
+                                const umkmId = parseInt(element.dataset.id);
+                                if (umkmId) {
+                                    selectUmkm(umkmId);
+                                }
+                            } else if (element.classList.contains('filter-btn')) {
+                                // Handle filter button click
+                                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                                element.classList.add('active');
+                                const category = element.dataset.category;
+                                document.querySelectorAll('.umkm-card').forEach(card => {
+                                    const umkmId = parseInt(card.dataset.id);
+                                    const umkm = umkmData.find(u => u.id === umkmId);
+                                    card.classList.toggle('hidden', category !== 'all' && umkm.kategori !== category);
+                                });
+                            }
+                        }, 50);
+                    }
+                }, {passive: false});
+
+                element.addEventListener('touchcancel', function (e) {
+                    this.style.transform = '';
+                    hasMoved = false;
+                }, {passive: true});
             });
 
-            button.addEventListener('touchcancel', function (e) {
-                touchStarted = false;
-            });
-        });
+            // Start GPS tracking for mobile
+            startLocationTracking();
         }
 
         window.addEventListener('scroll', toggleScrollToTopButton);
@@ -1662,6 +1994,20 @@
                 e.preventDefault();
             }
         }, {passive: false});
+
+        // Cleanup location tracking when page is unloaded
+        window.addEventListener('beforeunload', function() {
+            stopLocationTracking();
+        });
+
+        // Handle page visibility changes (when app goes to background/foreground)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopLocationTracking();
+            } else {
+                startLocationTracking();
+            }
+        });
     </script>
 </body>
 
